@@ -1,9 +1,8 @@
 from django.urls import path
-from .views import blog_endpoint, blog_detail_endpoint
-
+from .views import BlogEndpoint, BlogDetailEndpoint
 
 urlpatterns = [
-    path("blogs/", blog_endpoint),
+    path("blogs/", BlogEndpoint.as_view()),
     # blog detail endpoint this url will handle, retrieve, put, delete
-    path("blogs/<int:id>/", blog_detail_endpoint),
+    path("blogs/<int:id>/", BlogDetailEndpoint.as_view()),
 ]

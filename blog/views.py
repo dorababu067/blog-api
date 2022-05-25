@@ -1,31 +1,23 @@
+from ast import Delete
 from django.http import Http404
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 
+
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 from .models import Blog
 from .serializers import BlogSerializer
 
-# C - CREATE    --> Method POST
-# R - GET (All)  --> Method GET
 
-# R - RETRIEVE(Single)  --> Method GET -- id
-# U - UPDATE    --> Method PUT -- id
-# D - DELETE    --> Method DELETE -- id
-
-
-@api_view(["GET", "POST"])
-def blog_endpoint(request):
-    """This endpoint will handle GET, POST methods"""
-
-    if request.method == "GET":
+class BlogEndpoint(APIView):
+    def get(self, request):
         # queryset will return all objects inside the blog table
         blogs = Blog.objects.all()
         serializer = BlogSerializer(blogs, many=True)
         return Response(serializer.data)
 
-    if request.method == "POST":
+    def post(self, request):
         serializer = BlogSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -34,22 +26,23 @@ def blog_endpoint(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET", "PUT", "DELETE"])
-def blog_detail_endpoint(request, id):
-    """This endpoint  will handle RETRIEVE, UPDATE, DELETE methods"""
+class BlogDetailEndpoint(APIView):
+    def get_blog(self, id):
+        try:
+            blog = Blog.objects.get(id=id)
+            return blog
+        except Blog.DoesNotExist:
+            raise Http404
 
     # get individual blog
-    try:
-        blog = Blog.objects.get(id=id)
-    except Blog.DoesNotExist:
-        raise Http404
-
-    # RETRIEVE BLOG will only one object data
-    if request.method == "GET":
+    def get(self, request, id):
+        blog = self.get_blog(id)
         serializer = BlogSerializer(blog)
         return Response(serializer.data)
 
-    if request.method == "PUT":
+    def put(self, request, id):
+        blog = self.get_blog(id)
+
         # Update the
         serializer = BlogSerializer(instance=blog, data=request.data)
         if serializer.is_valid():
@@ -58,6 +51,8 @@ def blog_detail_endpoint(request, id):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    if request.method == "DELETE":
+    def delete(self, request, id):
+        blog = self.get_blog(id)
+
         blog.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
